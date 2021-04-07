@@ -4,11 +4,17 @@ from intersection_and_union import *
 document_token_set_mapping = joblib.load('documents_token_set')
 def get_doc_token_set(document_name):
     return document_token_set_mapping[document_name]
+
+
+# jaccard similarity
 def jaccard_similarity(query_set,doc_set):
     intersection_tokens = set(query_set).intersection(set(doc_set))
     union_set = set(query_set).union(set(doc_set))
     jaccard_coeff = len(intersection_tokens)/len(union_set)
     return jaccard_coeff
+
+
+    
 if __name__=="__main__":
     print("testing jaccard similarity")
     print("Example Jaccard:",jaccard_similarity(["a"],["a","d","a"]))
@@ -27,7 +33,7 @@ if __name__=="__main__":
     number_of_queries = int(input("Enter number of queries"))
     for query in range(number_of_queries):
         query = str(input("Enter the query with terms separated by space"))
-        skip_optimization = str(input("Do you want to optimize retrieval by first doing index retrieval then ranking: YES or NO?"))
+        optimization = str(input("Do you want to optimize retrieval by first doing index retrieval then ranking: YES or NO?"))
         query = preProcessSentence(query)
         query=' '.join(query)
         print("query terms",query)
@@ -44,7 +50,7 @@ if __name__=="__main__":
         #     print("Sorted",query_terms)
 
 
-        if skip_optimization.upper() == "NO":
+        if optimization.upper() == "NO":
             no_of_comparisons=0
             relevant_docs = []
             for document_name in document_index_map_keys:
