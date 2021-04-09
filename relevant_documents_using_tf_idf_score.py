@@ -128,10 +128,12 @@ for term in query_terms:
 
 doc_number_of_max_doc_score = np.argmax(document_scores)
 
+top_5_docs = document_scores.argsort()[-5:][::-1]
 
 # Finding name of document corresponding to document number
+document_index_map_keys = list(document_map.keys())
+document_index_map_values = list(document_map.values())
 
-for key, doc_number in document_map.items():
-  if doc_number_of_max_doc_score == doc_number:
-    print('The most relevant document for the given query is -> ', key)
-    break
+for doc_number_top in top_5_docs:
+    index = document_index_map_values.index(doc_number_top)
+    print('The most relevant documents for the given query  and their scores are -> ', document_index_map_keys[index], document_scores[doc_number_top])
