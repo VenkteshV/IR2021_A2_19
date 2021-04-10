@@ -3,6 +3,31 @@ import numpy as np
 import math
 import joblib
 from collections import Counter
+from question2.preprocessing import preProcessSentence
+
+
+def get_query_vector(query_terms, norm_type="log_norm"):
+  query_vec = np.zeros((1,len(term_map.keys())))
+  query_term_frequencies = Counter(query_terms)
+  # print("query_term_frequencies",query_term_frequencies)
+
+  for term in np.unique(query_terms):
+    idf = math.log10( len(term_freq_matrix[0]) / (1 + dictionary[term][0][0]))
+    value_mapped_to_key = term_map[term]
+    if norm_type=="log_norm":
+      term_freq = math.log10(1 + query_term_frequencies[term])
+    query_vec[0][value_mapped_to_key] = term_freq * idf
+
+  print("query_vec",query_vec,query_vec.shape,np.where((query_vec!=0)))
+  return query_vec
+
+def cosine_similarity(query_vector, document_vector):
+  numerator = np.dot(query_vector,document_vector.T)
+  denominator = np.linalg.norm(query_vector,axis=1)* np.linalg.norm(document_vector,axis=1)
+  cosine_similarity = numerator/denominator
+  # print("cosine_similarity",cosine_similarity,cosine_similarity.shape)
+  cosine_similarity = cosine_similarity.squeeze()
+  return cosine_similarity
 
 if __name__=="__main__":
   corpus = {} 
@@ -97,6 +122,9 @@ if __name__=="__main__":
 
   for query_index in range(number_of_queries):
     query_terms = str(input("Enter the query terms separated by space"))
+    query_terms = preProcessSentence(query_terms)
+    query_terms = ' '.join(query_terms)
+    print("The preprocessed version of query is: ",query_terms)
 
   # pre-processed text
  
@@ -115,8 +143,7 @@ if __name__=="__main__":
 
     # query_terms = ['play', 'play', 'aluminum', 'tower', 'mansion']
     query_terms = query_terms.split(" ")
-    query_term_frequencies = Counter(query_terms)
-    print("query_term_frequencies",query_term_frequencies)
+    query_vector = get_query_vector(query_terms)
     query_terms = np.unique(query_terms)
 
     # computing document scores
@@ -150,4 +177,15 @@ if __name__=="__main__":
     document_index_map_values = list(document_map.values())
     for doc_number_top in top_5_docs:
         index = document_index_map_values.index(doc_number_top)
-        print('The most relevant documents for the given query  and their scores are -> ', document_index_map_keys[index], document_scores[doc_number_top])
+        print('The most relevant documents for the given query  and their tf-idf scores are -> ', document_index_map_keys[index], document_scores[doc_number_top])
+
+
+    # cosine simialrity based ranking Question 2 part 3
+
+    document_cos_sim_scores = cosine_similarity(query_vector, document_term_matrix)
+
+    top_5_docs_cos_sim = document_cos_sim_scores.argsort()[-5:][::-1]
+
+    for doc_number_top in top_5_docs_cos_sim:
+      index = document_index_map_values.index(doc_number_top)
+      print('The most relevant documents for the given query  and their cosine similarity scores are -> ', document_index_map_keys[index], document_cos_sim_scores[doc_number_top])
