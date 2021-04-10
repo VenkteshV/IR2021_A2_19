@@ -4,7 +4,9 @@ import math
 import joblib
 from collections import Counter
 from question2.preprocessing import preProcessSentence
+from question2.intersection_and_union import *
 
+inverted_index = joblib.load('question2/inverted_index')
 
 def get_query_vector(query_terms, norm_type="log_norm"):
   query_vec = np.zeros((1,len(term_map.keys())))
@@ -20,6 +22,29 @@ def get_query_vector(query_terms, norm_type="log_norm"):
 
   print("query_vec",query_vec,query_vec.shape,np.where((query_vec!=0)))
   return query_vec
+
+def get_document_scores(term_freq_matrix,value_in_term_map, norm_type="log"):
+
+    for doc_num in range(0, len(term_freq_matrix[0])):
+        if norm_type=="log":
+
+          idf = math.log10( len(term_freq_matrix[0]) / (1 + dictionary[term][0][0]))
+
+          tf = math.log10(1 + term_freq_matrix[value_in_term_map][doc_num])
+
+          document_scores[doc_num] += (tf * idf)
+    return document_scores
+
+def get_document_scores_optimized(reduced_docs_list,value_in_term_map, norm_type="log"):
+    for doc_num in reduced_docs_list:
+        if norm_type=="log":
+
+          idf = math.log10( len(term_freq_matrix[0]) / (1 + dictionary[term][0][0]))
+
+          tf = math.log10(1 + term_freq_matrix[value_in_term_map][doc_num-1])
+
+          document_scores[doc_num-1] += (tf * idf)
+    return document_scores
 
 def cosine_similarity(query_vector, document_vector):
   numerator = np.dot(query_vector,document_vector.T)
@@ -122,8 +147,11 @@ if __name__=="__main__":
 
   for query_index in range(number_of_queries):
     query_terms = str(input("Enter the query terms separated by space"))
+    optimization = str(input("Do you want to optimize retrieval by first doing index retrieval then ranking: YES or NO?"))
+
     query_terms = preProcessSentence(query_terms)
     query_terms = ' '.join(query_terms)
+    operators = ["OR" for i in range(len(list(set(query_terms.split(" "))))-1)]
     print("The preprocessed version of query is: ",query_terms)
 
   # pre-processed text
@@ -144,28 +172,95 @@ if __name__=="__main__":
     # query_terms = ['play', 'play', 'aluminum', 'tower', 'mansion']
     query_terms = query_terms.split(" ")
     query_vector = get_query_vector(query_terms)
-    query_terms = np.unique(query_terms)
+    query_terms = list(set(query_terms))
 
+    output =None
     # computing document scores
+    if optimization.lower()=="yes":
+            for index,operator in enumerate(operators):
+                pos_lists = []
+                NOT = False
+                
+                if "and" in operator.lower():
+                    if index ==0:
+                        pos_list_1 = inverted_index.get(query_terms[index])
+                        if not pos_list_1:
+                            print("Term not found: {}\nHence, operation has failed".
+                                format(query_terms[index]))
+                            skip = True
+                            break
+                        else:
+                            pos_list_1 = pos_list_1[1]
+                    else:
+                        # to use the output from applying previous operation
+                        pos_list_1  = output
+                    pos_list_2 = inverted_index.get(query_terms[index+1])
+                    # covers AND NOT
+                    if "not" in operator.lower():
+                        NOT = True
+                        pos_list_2 = pos_list_2[1] if pos_list_2 else []
+                    else:
+                        if not pos_list_2:
+                            print("Term not found: {}\nHence, operation has failed".
+                                    format(query_terms[index]))
+                            skip = True
+                            break
+                        else:
+                            pos_list_2 = pos_list_2[1]
+                    pos_list_1.sort()
+                    pos_list_2.sort()
+                    pos_lists.append(pos_list_1)
+                    pos_lists.append(pos_list_2)
+                    output,comparisons = AND_operator(pos_lists, NOT)
+                    # print("Number of comparisons",comparisons_sum)
+                    # print("The merged postings are", output)
+                elif "or" in  operator.lower():
+                    if index ==0:
+                        pos_list_1 = inverted_index.get(query_terms[index])
+                        if not pos_list_1:
+                            pos_list_1 = []
+                        else:
+                            pos_list_1 = pos_list_1[1]
+                    else:
+                        pos_list_1  = output
+                    pos_list_2 = inverted_index.get(query_terms[index+1])
+                    if not pos_list_2:
+                        pos_list_2 = []
+                    else:
+                        pos_list_2 = pos_list_2[1]
+                    # covers or not
+                    if "not" in operator.lower():
+                        NOT = True
+                        not_items = inverted_index.get(query_terms[index+1])
+                        if not_items:
+                            not_items = not_items[1]
+                        else:
+                            not_items = []
+                        pos_list_2 = [x for x in all_docids if x not in not_items]
+                    if not pos_list_2:
+                        pos_list_2 = []
+                    pos_list_1.sort()
+                    pos_list_2.sort()
+                    pos_lists.append(pos_list_1)
+                    pos_lists.append(pos_list_2)
+                    output,comparisons = OR_operator(pos_lists, NOT)
+    query_terms = np.unique(query_terms)
 
     for term in query_terms:
 
       if (term not in term_map.keys()):
         continue
 
+      no_of_comparisons=0
       value_in_term_map = term_map[term]
-
-      for doc_num in range(0, len(term_freq_matrix[0])):
-
-        idf = math.log10( len(term_freq_matrix[0]) / (1 + dictionary[term][0][0]))
-
-        tf = math.log10(1 + term_freq_matrix[value_in_term_map][doc_num])
-
-        document_scores[doc_num] += (tf * idf)
-
+      if optimization.upper() == "NO":
+          document_scores = get_document_scores(term_freq_matrix,value_in_term_map,norm_type="log")
+          no_of_comparisons = len(term_freq_matrix[0])
+      else:               
+          document_scores = get_document_scores_optimized(output,value_in_term_map)
 
     # print(document_scores)
-
+          no_of_comparisons = len(output)
     doc_number_of_max_doc_score = np.argmax(document_scores)
 
     top_5_docs = document_scores.argsort()[-5:][::-1]
@@ -178,7 +273,7 @@ if __name__=="__main__":
     for doc_number_top in top_5_docs:
         index = document_index_map_values.index(doc_number_top)
         print('The most relevant documents for the given query  and their tf-idf scores are -> ', document_index_map_keys[index], document_scores[doc_number_top])
-
+    print("Total number of comparisons were", no_of_comparisons)
 
     # cosine simialrity based ranking Question 2 part 3
 
