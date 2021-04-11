@@ -100,7 +100,7 @@ def compute_term_freq_matrix(term_freq_matrix, variant):
 
 
 
-def get_query_vector(query_terms, norm_type="log_norm"):
+def get_query_vector(query_terms, norm_type="4"):
   query_vec = np.zeros((1,len(term_map.keys())))
   query_term_frequencies = Counter(query_terms)
   # print("query_term_frequencies",query_term_frequencies)
@@ -108,32 +108,41 @@ def get_query_vector(query_terms, norm_type="log_norm"):
   for term in np.unique(query_terms):
     idf = math.log10( len(term_freq_matrix[0]) / (1 + dictionary[term][0][0]))
     value_mapped_to_key = term_map[term]
-    if norm_type=="log_norm":
+    if norm_type=="4":
+      print("here")
       term_freq = math.log10(1 + query_term_frequencies[term])
+    elif norm_type=="1":
+      term_freq = 1
+    elif norm_type=="2":
+      term_freq = query_term_frequencies[term]
+    elif norm_type=="3":
+      term_freq = query_term_frequencies[term]/ sum(query_term_frequencies.values())
+    elif norm_type=="5":
+      term_freq = 0.5 + (0.5 *(query_term_frequencies[term]/(max(query_term_frequencies.values()))))
+
+
+
     query_vec[0][value_mapped_to_key] = term_freq * idf
 
   print("query_vec",query_vec,query_vec.shape,np.where((query_vec!=0)))
   return query_vec
 
-def get_document_scores(term_freq_matrix,value_in_term_map, norm_type="log"):
+def get_document_scores(term_freq_matrix,value_in_term_map):
 
     for doc_num in range(0, len(term_freq_matrix[0])):
-        if norm_type=="log":
 
-          idf = math.log10( len(term_freq_matrix[0]) / (1 + dictionary[term][0][0]))
+        idf = math.log10( len(term_freq_matrix[0]) / (1 + dictionary[term][0][0]))
 
-          tf = math.log10(1 + term_freq_matrix[value_in_term_map][doc_num])
+        tf = term_freq_matrix[value_in_term_map][doc_num]
 
-          document_scores[doc_num] += (tf * idf)
+        document_scores[doc_num] += (tf * idf)
     return document_scores
 
-def get_document_scores_optimized(reduced_docs_list,value_in_term_map, norm_type="log"):
+def get_document_scores_optimized(reduced_docs_list,value_in_term_map):
     for doc_num in reduced_docs_list:
-        if norm_type=="log":
-
           idf = math.log10( len(term_freq_matrix[0]) / (1 + dictionary[term][0][0]))
 
-          tf = math.log10(1 + term_freq_matrix[value_in_term_map][doc_num-1])
+          tf = term_freq_matrix[value_in_term_map][doc_num-1]
 
           document_scores[doc_num-1] += (tf * idf)
     return document_scores
@@ -158,7 +167,7 @@ if __name__=="__main__":
   # key and corresponding posting list
   dictionary = {}
 
-  with open('DocTerms.pickle', 'rb') as handle:
+  with open('DocTerms_Spacy.pickle', 'rb') as handle:
     corpus = pickle.load(handle)
 
 
@@ -252,7 +261,7 @@ if __name__=="__main__":
 
     # query_terms = ['play', 'play', 'aluminum', 'tower', 'mansion']
     query_terms = query_terms.split(" ")
-    query_vector = get_query_vector(query_terms)
+    query_vector = get_query_vector(query_terms,freq_variant)
     query_terms = list(set(query_terms))
 
     output =None
@@ -335,7 +344,7 @@ if __name__=="__main__":
       no_of_comparisons=0
       value_in_term_map = term_map[term]
       if optimization.upper() == "NO":
-          document_scores = get_document_scores(term_freq_matrix,value_in_term_map,norm_type="log")
+          document_scores = get_document_scores(term_freq_matrix,value_in_term_map)
           no_of_comparisons = len(term_freq_matrix[0])
       else:               
           document_scores = get_document_scores_optimized(output,value_in_term_map)
