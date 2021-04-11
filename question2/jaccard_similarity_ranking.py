@@ -1,5 +1,5 @@
 import joblib
-
+from preprocessing import preProcessSentence
 from intersection_and_union import *
 document_token_set_mapping = joblib.load('documents_token_set')
 def get_doc_token_set(document_name):
@@ -58,7 +58,7 @@ if __name__=="__main__":
                 jaccard_sim = jaccard_similarity(query_tokens,token_set_from_doc)
                 no_of_comparisons+=1
                 relevant_docs.append((document_name,jaccard_sim))
-            print("relevant_docs",relevant_docs)
+            # print("relevant_docs",relevant_docs)
             relevant_docs.sort(key = lambda x: x[1], reverse=True)
             top_docs = relevant_docs[:5]
 
