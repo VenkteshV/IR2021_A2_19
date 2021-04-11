@@ -8,6 +8,98 @@ from question2.intersection_and_union import *
 
 inverted_index = joblib.load('question2/inverted_index')
 
+
+def compute_binary_variant(term_freq_matrix):
+
+  for key in dictionary.keys():
+    
+    value_mapped_to_key = term_map[key]
+    posting_list = dictionary[key][1]
+
+    for document_number in posting_list:
+      term_freq_matrix[value_mapped_to_key][document_number] = 1
+
+
+def compute_raw_count_variant(term_freq_matrix):
+
+  for key in dictionary.keys():
+
+    value_mapped_to_key = term_map[key]
+    posting_list = dictionary[key][1]
+
+    for document_number in posting_list:
+      prev_val = term_freq_matrix[value_mapped_to_key][document_number]
+      term_freq_matrix[value_mapped_to_key][document_number] = 1 + prev_val
+
+
+def compute_log_normalized_variant(term_freq_matrix):
+
+  for key in dictionary.keys():
+
+    value_mapped_to_key = term_map[key]
+    posting_list = dictionary[key][1]
+
+    for document_number in posting_list:
+      prev_val = term_freq_matrix[value_mapped_to_key][document_number]
+      term_freq_matrix[value_mapped_to_key][document_number] = 1 + prev_val
+
+  for i in range(len(term_freq_matrix)):
+    for j in range(len(term_freq_matrix[0])):
+      term_freq_matrix[i][j] = math.log10(1 + term_freq_matrix[i][j])
+
+
+def compute_term_freq_variant(term_freq_matrix):
+
+  for key in dictionary.keys():
+
+    value_mapped_to_key = term_map[key]
+    posting_list = dictionary[key][1]
+
+    for document_number in posting_list:
+      prev_val = term_freq_matrix[value_mapped_to_key][document_number]
+      term_freq_matrix[value_mapped_to_key][document_number] = 1 + prev_val
+
+  sum_freq_of_all_terms_in_a_doc = np.sum(term_freq_matrix,axis=0) 
+
+  for i in range(len(term_freq_matrix)):
+    for j in range(len(term_freq_matrix[0])):
+      term_freq_matrix[i][j] = (term_freq_matrix[i][j] / sum_freq_of_all_terms_in_a_doc[j])
+
+
+def compute_double_normalization_variant(term_freq_matrix):
+
+  for key in dictionary.keys():
+
+    value_mapped_to_key = term_map[key]
+    posting_list = dictionary[key][1]
+
+    for document_number in posting_list:
+      prev_val = term_freq_matrix[value_mapped_to_key][document_number]
+      term_freq_matrix[value_mapped_to_key][document_number] = 1 + prev_val
+
+  max_freq_in_a_doc = np.amax(term_freq_matrix,axis=0) 
+
+  for i in range(len(term_freq_matrix)):
+    for j in range(len(term_freq_matrix[0])):
+      res = 0.5 * (term_freq_matrix[i][j] / max_freq_in_a_doc[j])
+      term_freq_matrix[i][j] = 0.5 + res
+
+
+def compute_term_freq_matrix(term_freq_matrix, variant):
+
+  if (variant == "1"):
+    compute_binary_variant(term_freq_matrix)
+  elif (variant == "2"):
+    compute_raw_count_variant(term_freq_matrix)
+  elif (variant == "3"):
+    compute_term_freq_variant(term_freq_matrix)
+  elif (variant == "4"):
+    compute_log_normalized_variant(term_freq_matrix)
+  elif (variant == "5"):
+    compute_double_normalization_variant(term_freq_matrix)
+
+
+
 def get_query_vector(query_terms, norm_type="log_norm"):
   query_vec = np.zeros((1,len(term_map.keys())))
   query_term_frequencies = Counter(query_terms)
@@ -111,24 +203,13 @@ if __name__=="__main__":
 
   # print('Shape of term freq matrix -> ',term_freq_matrix.shape)
 
-
   # Filling term freq matrix
 
-  for key in dictionary.keys():
+  freq_variant = str(input("Enter term frequency variant number"))
 
-    value_mapped_to_key = term_map[key]
-
-    posting_list = dictionary[key][1]
-
-    for document_number in posting_list:
-
-      prev_val = term_freq_matrix[value_mapped_to_key][document_number]
-
-      term_freq_matrix[value_mapped_to_key][document_number] = 1 + prev_val
-
+  compute_term_freq_matrix(term_freq_matrix, freq_variant)
 
   # print(term_freq_matrix)
-
 
   # removing duplicates
 
