@@ -10,7 +10,11 @@ def get_doc_token_set(document_name):
 def jaccard_similarity(query_set,doc_set):
     intersection_tokens = set(query_set).intersection(set(doc_set))
     union_set = set(query_set).union(set(doc_set))
-    jaccard_coeff = len(intersection_tokens)/len(union_set)
+    # denomination can be also computed as len(query_set)+len(doc_set) - len(intersection_tokens)
+    if len(union_set)!=0:
+        jaccard_coeff = len(intersection_tokens)/len(union_set)
+    else:
+        return 0
     return jaccard_coeff
 
 
@@ -73,7 +77,6 @@ if __name__=="__main__":
             for index,operator in enumerate(operators):
                 pos_lists = []
                 NOT = False
-                
                 if "and" in operator.lower():
                     if index ==0:
                         pos_list_1 = inverted_index.get(query_terms[index])
@@ -108,7 +111,8 @@ if __name__=="__main__":
                     comparisons_sum+=comparisons
                     # print("Number of comparisons",comparisons_sum)
                     # print("The merged postings are", output)
-                elif "or" in  operator.lower():
+                elif "or" in  operator.lower() and len(query_terms)>1:
+                    print("here")
                     if index ==0:
                         pos_list_1 = inverted_index.get(query_terms[index])
                         if not pos_list_1:
@@ -139,6 +143,11 @@ if __name__=="__main__":
                     pos_lists.append(pos_list_2)
                     output,comparisons = OR_operator(pos_lists, NOT)
                     comparisons_sum+=comparisons
+                else:
+                    output = inverted_index.get(query_terms[0])[1]
+            if len(operators)==0:
+                    output = inverted_index.get(query_terms[0])[1]
+
             # skip scenario is true only if the terms are absent in dictionary
             no_of_comparisons = 0
             relevant_docs = []
@@ -150,7 +159,7 @@ if __name__=="__main__":
                 jaccard_sim = jaccard_similarity(query_tokens,token_set_from_doc)
                 no_of_comparisons+=1
                 relevant_docs.append((document_name,jaccard_sim))
-            print("relevant_docs",relevant_docs)
+            # print("relevant_docs",relevant_docs)
             relevant_docs.sort(key = lambda x: x[1], reverse=True)
             top_docs = relevant_docs[:5]
 
