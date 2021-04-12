@@ -366,11 +366,20 @@ if __name__=="__main__":
     print("Total number of comparisons were", no_of_comparisons)
 
     # cosine simialrity based ranking Question 2 part 3
+    if optimization.lower()=="yes":
+      output_indices = [out-1 for out in output]
+      document_term_matrix = document_term_matrix[output_indices]
 
     document_cos_sim_scores = cosine_similarity(query_vector, document_term_matrix)
 
     top_5_docs_cos_sim = document_cos_sim_scores.argsort()[-5:][::-1]
-
-    for doc_number_top in top_5_docs_cos_sim:
-      index = document_index_map_values.index(doc_number_top)
-      print('The most relevant documents for the given query  and their cosine similarity scores are -> ', document_index_map_keys[index], document_cos_sim_scores[doc_number_top])
+    if optimization.lower()=="yes":
+       for doc_number_top in top_5_docs_cos_sim:
+          doc_number_top_1 = output_indices[doc_number_top]
+          index = document_index_map_values.index(doc_number_top_1)
+          print('The most relevant documents for the given query  and their cosine similarity scores are -> ', document_index_map_keys[index], document_cos_sim_scores[doc_number_top])
+    else:
+      for doc_number_top in top_5_docs_cos_sim:
+        index = document_index_map_values.index(doc_number_top)
+        print('The most relevant documents for the given query  and their cosine similarity scores are -> ', document_index_map_keys[index], document_cos_sim_scores[doc_number_top])
+   
