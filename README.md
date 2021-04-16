@@ -1,6 +1,7 @@
 # IR2021_A2_19
 
 #Question1 
+
 For Phrase queries run
   1) Enter number of queries:   1
   2) Enter the query with terms separated by space:  Telephones jangle and Typewriters
