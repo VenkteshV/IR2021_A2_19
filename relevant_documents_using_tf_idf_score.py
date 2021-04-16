@@ -106,23 +106,23 @@ def get_query_vector(query_terms, norm_type="4"):
   # print("query_term_frequencies",query_term_frequencies)
 
   for term in np.unique(query_terms):
-    idf = math.log10( len(term_freq_matrix[0]) / (1 + dictionary[term][0][0]))
-    value_mapped_to_key = term_map[term]
-    if norm_type=="4":
-      print("here")
-      term_freq = math.log10(1 + query_term_frequencies[term])
-    elif norm_type=="1":
-      term_freq = 1
-    elif norm_type=="2":
-      term_freq = query_term_frequencies[term]
-    elif norm_type=="3":
-      term_freq = query_term_frequencies[term]/ sum(query_term_frequencies.values())
-    elif norm_type=="5":
-      term_freq = 0.5 + (0.5 *(query_term_frequencies[term]/(max(query_term_frequencies.values()))))
+    if term in dictionary:
+      idf = math.log10( len(term_freq_matrix[0]) / (1 + dictionary[term][0][0]))
+      value_mapped_to_key = term_map[term]
+      if norm_type=="4":
+        term_freq = math.log10(1 + query_term_frequencies[term])
+      elif norm_type=="1":
+        term_freq = 1
+      elif norm_type=="2":
+        term_freq = query_term_frequencies[term]
+      elif norm_type=="3":
+        term_freq = query_term_frequencies[term]/ sum(query_term_frequencies.values())
+      elif norm_type=="5":
+        term_freq = 0.5 + (0.5 *(query_term_frequencies[term]/(max(query_term_frequencies.values()))))
 
 
 
-    query_vec[0][value_mapped_to_key] = term_freq * idf
+      query_vec[0][value_mapped_to_key] = term_freq * idf
 
   print("query_vec",query_vec,query_vec.shape,np.where((query_vec!=0)))
   return query_vec
@@ -167,7 +167,7 @@ if __name__=="__main__":
   # key and corresponding posting list
   dictionary = {}
 
-  with open('DocTerms_Spacy.pickle', 'rb') as handle:
+  with open('question2/DocTerms_Spacy.pickle', 'rb') as handle:
     corpus = pickle.load(handle)
 
 
