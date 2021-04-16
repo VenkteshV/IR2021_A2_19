@@ -3,8 +3,9 @@
 #Question1 
 
 For Phrase queries run
-  1) Enter number of queries:   1
-  2) Enter the query with terms separated by space:  Telephones jangle and Typewriters
+  1) python PhraseQueries_withoutStopWords.py
+  2) Enter number of queries:   1
+  3) Enter the query with terms separated by space:  Telephones jangle and Typewriters
 
 
 #Question2
