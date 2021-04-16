@@ -19,3 +19,13 @@ For Jaccard similarity run
 For part 2 and 3 of question 2 (tf-idf and cosine similairity run:
 python relevant_documents_using_tf_idf_score.py
 
+#Question 3:
+Kindly download the dataset from -> https://drive.google.com/file/d/1okxas8RjrsGuKKSpEDRfxEq6aSa6CaDk/view
+
+microsoft_relevance.py -> Kindly run the file once you place the dataset in the same folder. 
+1) python microsoft_relevance.py
+
+The following outputs can be observed:
+	1) A random file order (text file saved in current folder) with descending relevance scores. Number of files possible in stdout
+	2) Max DCG score for 50 and full dataset (qid:4)
+	3) Precision-Recall curve as plot (fig saved as jpg file)
